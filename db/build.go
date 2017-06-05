@@ -12,30 +12,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const (
-	stmtCreateTables = `
-CREATE TABLE sections (
-    id INTEGER NOT NULL PRIMARY KEY,
-    label TEXT NOT NULL,
-    path TEXT NOT NULL
-);
-
-CREATE TABLE articles (
-    id INTEGER NOT NULL PRIMARY KEY,
-    section_id INTEGER NOT NULL,
-    path TEXT NOT NULL,
-    size INTEGER NOT NULL,
-    state INTEGER NOT NULL DEFAULT 0
-);
-`
-	stmtAddSection = `
-INSERT INTO sections (id, label, path) VALUES (?, ?, ?);
-`
-	stmtAddArticle = `
-INSERT INTO articles (id, section_id, path, size) VALUES (?, ?, ?, ?);
-`
-)
-
 func Build(dir string, dbfile string) error {
 	os.Remove(dbfile)
 
@@ -155,3 +131,27 @@ func mapArticles(sectionPath string, fn func(path string, size int64)) error {
 
 	return nil
 }
+
+const (
+	stmtCreateTables = `
+CREATE TABLE sections (
+    id INTEGER NOT NULL PRIMARY KEY,
+    label TEXT NOT NULL,
+    path TEXT NOT NULL
+);
+
+CREATE TABLE articles (
+    id INTEGER NOT NULL PRIMARY KEY,
+    section_id INTEGER NOT NULL,
+    path TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    state INTEGER NOT NULL DEFAULT 0
+);
+`
+	stmtAddSection = `
+INSERT INTO sections (id, label, path) VALUES (?, ?, ?);
+`
+	stmtAddArticle = `
+INSERT INTO articles (id, section_id, path, size) VALUES (?, ?, ?, ?);
+`
+)
