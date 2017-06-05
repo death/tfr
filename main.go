@@ -22,12 +22,18 @@ func main() {
 		}
 	}
 
+	store, err := db.NewStore(textfilesDBFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer store.Close()
+
 	if err := termbox.Init(); err != nil {
 		log.Fatal(err)
 	}
 	defer termbox.Close()
 
-	currentView = NewSectionsView()
+	currentView = NewSectionsView(store)
 
 	draw()
 	eventLoop()

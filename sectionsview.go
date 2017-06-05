@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/death/tfr/db"
 	"github.com/nsf/termbox-go"
 )
 
@@ -10,56 +11,20 @@ type SectionsView struct {
 	list *ListView
 }
 
-func NewSectionsView() *SectionsView {
-	sections := []string{
-		"100",
-		"Adventure",
-		"Anarchy",
-		"Apple",
-		"Art",
-		"Bbs",
-		"Computers",
-		"Conspiracy",
-		"Drugs",
-		"Food",
-		"Fun",
-		"Games",
-		"Groups",
-		"Hacking",
-		"Hamradio",
-		"Holiday",
-		"Humor",
-		"Internet",
-		"Law",
-		"Magazines",
-		"Media",
-		"Messages",
-		"Music",
-		"News",
-		"Occult",
-		"Phreak",
-		"Piracy",
-		"Politics",
-		"Programming",
-		"Reports",
-		"Rpg",
-		"Science",
-		"Sex",
-		"Sf",
-		"Stories",
-		"Survival",
-		"Ufo",
-		"Uploads",
-		"Virus",
+func NewSectionsView(store *db.Store) *SectionsView {
+	sections := store.AllSections()
+	items := make([]string, len(sections))
+	for i, section := range sections {
+		items[i] = section.Label
 	}
 
-	w, _ := termbox.Size()
+	w, h := termbox.Size()
 
 	list := &ListView{
 		StartX: 0,
 		EndX:   w,
 		StartY: 0,
-		EndY:   10,
+		EndY:   h - 1,
 
 		ForegroundColor: termbox.ColorDefault,
 		BackgroundColor: termbox.ColorDefault,
@@ -67,7 +32,7 @@ func NewSectionsView() *SectionsView {
 		SelectForegroundColor: termbox.ColorWhite,
 		SelectBackgroundColor: termbox.ColorBlue,
 
-		Items: sections,
+		Items: items,
 	}
 
 	return &SectionsView{
