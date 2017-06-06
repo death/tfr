@@ -8,7 +8,9 @@ import (
 )
 
 type SectionsView struct {
-	list *ListView
+	list     *ListView
+	store    *db.Store
+	sections []db.Section
 }
 
 func NewSectionsView(store *db.Store) *SectionsView {
@@ -36,7 +38,9 @@ func NewSectionsView(store *db.Store) *SectionsView {
 	}
 
 	return &SectionsView{
-		list: list,
+		list:     list,
+		store:    store,
+		sections: sections,
 	}
 }
 
@@ -67,6 +71,13 @@ func (v *SectionsView) drawStatusLine() {
 	}
 }
 
-func (v *SectionsView) HandleEvent(ev termbox.Event) bool {
+func (v *SectionsView) HandleEvent(ev termbox.Event) (bool, View) {
+	if ev.Type == termbox.EventKey {
+		if ev.Key == termbox.KeyEnter {
+			section := v.sections[v.list.SelectedItem()]
+			articlesView := NewArticlesView(v.store, section.ID)
+			return true, articlesView
+		}
+	}
 	return v.list.HandleEvent(ev)
 }

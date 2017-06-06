@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/list"
 	"log"
 	"os"
 
@@ -13,7 +14,7 @@ const (
 	textfilesDBFile = "/media/1984/Documents/textfiles/tfr.db"
 )
 
-var currentView View
+var viewStack *list.List
 
 func main() {
 	if _, err := os.Stat(textfilesDBFile); os.IsNotExist(err) {
@@ -33,7 +34,8 @@ func main() {
 	}
 	defer termbox.Close()
 
-	currentView = NewSectionsView(store)
+	viewStack = list.New()
+	viewStack.PushFront(NewSectionsView(store))
 
 	draw()
 	eventLoop()
@@ -42,7 +44,7 @@ func main() {
 func draw() {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 
-	currentView.Draw()
+	currentView().Draw()
 
 	termbox.Flush()
 }
@@ -56,11 +58,27 @@ func eventLoop() {
 		}
 
 		if ev.Key == termbox.KeyEsc {
-			return
-		}
-
-		if currentView.HandleEvent(ev) {
+			viewStack.Remove(viewStack.Front())
+			if viewStack.Front() == nil {
+				return
+			}
 			draw()
+		} else {
+			handled, nextView := currentView().HandleEvent(ev)
+			if handled {
+				if nextView != nil {
+					viewStack.PushFront(nextView)
+				}
+				draw()
+			}
 		}
 	}
+}
+
+func currentView() View {
+	element := viewStack.Front()
+	if element == nil {
+		log.Fatal("No current view")
+	}
+	return element.Value.(View)
 }

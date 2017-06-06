@@ -2,12 +2,21 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 )
 
 type Section struct {
 	ID    int
 	Label string
+}
+
+type Article struct {
+	ID    int
+	Label string
+	Path  string
+	Size  int64
+	State int
 }
 
 type Store struct {
@@ -55,8 +64,40 @@ func (s *Store) AllSections() []Section {
 	return sections
 }
 
+func (s *Store) ArticlesForSection(sectionID int) []Article {
+	logError := func(err error) {
+		log.Printf("Store.ArticlesForSection: %v\n", err)
+	}
+	rows, err := s.handle.Query(stmtArticlesForSection, sectionID)
+	if err != nil {
+		logError(err)
+		return nil
+	}
+	defer rows.Close()
+
+	articles := make([]Article, 0)
+	for rows.Next() {
+		article := Article{}
+		err = rows.Scan(&article.ID, &article.Path, &article.Size, &article.State)
+		if err != nil {
+			logError(err)
+			continue
+		}
+		article.Label = fmt.Sprintf("%-60s %10d", article.Path, article.Size)
+		articles = append(articles, article)
+	}
+	if rows.Err() != nil {
+		logError(rows.Err())
+	}
+	return articles
+}
+
 const (
 	stmtAllSections = `
 SELECT id, label FROM sections
+`
+	stmtArticlesForSection = `
+SELECT id, path, size, state FROM articles
+WHERE section_id = ?
 `
 )

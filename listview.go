@@ -106,21 +106,21 @@ func (v *ListView) isVisible(i int) bool {
 	return true
 }
 
-func (v *ListView) HandleEvent(ev termbox.Event) bool {
+func (v *ListView) HandleEvent(ev termbox.Event) (bool, View) {
 	if ev.Type != termbox.EventKey {
-		return false
+		return false, nil
 	}
 
 	switch ev.Key {
 	case termbox.KeyArrowDown:
 		v.CursorDown()
-		return true
+		return true, nil
 	case termbox.KeyArrowUp:
 		v.CursorUp()
-		return true
+		return true, nil
 	}
 
-	return false
+	return false, nil
 }
 
 func (v *ListView) SelectedItem() int {
