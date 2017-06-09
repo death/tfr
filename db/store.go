@@ -47,6 +47,10 @@ func (s *Store) LatestReadArticle() (*Article, error) {
 	return s.extractArticle(stmtLatestReadArticle)
 }
 
+func (s *Store) OldestUnfinishedArticle() (*Article, error) {
+	return s.extractArticle(stmtOldestUnfinishedArticle)
+}
+
 func (s *Store) extractArticle(query string) (*Article, error) {
 	rows, err := s.handle.Query(query)
 	if err != nil {
@@ -135,6 +139,12 @@ WHERE id = ?
 SELECT id, section_id, path, size, state, mtime FROM articles
 WHERE state = 1
 ORDER BY mtime DESC
+LIMIT 1
+`
+	stmtOldestUnfinishedArticle = `
+SELECT id, section_id, path, size, state, mtime FROM articles
+WHERE state = 2
+ORDER BY mtime ASC
 LIMIT 1
 `
 )
