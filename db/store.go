@@ -40,7 +40,15 @@ func (s *Store) Close() {
 }
 
 func (s *Store) RandomArticle() (*Article, error) {
-	rows, err := s.handle.Query(stmtRandomArticle)
+	return s.extractArticle(stmtRandomArticle)
+}
+
+func (s *Store) LatestReadArticle() (*Article, error) {
+	return s.extractArticle(stmtLatestReadArticle)
+}
+
+func (s *Store) extractArticle(query string) (*Article, error) {
+	rows, err := s.handle.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +99,19 @@ func (s *Store) FindSection(sectionID int) (*Section, error) {
 	return nil, errors.New("no section found")
 }
 
+const (
+	stateUnread     = 0
+	stateRead       = 1
+	stateUnfinished = 2
+)
+
 func (s *Store) MarkAsRead(articleID int) error {
-	_, err := s.handle.Exec(stmtMarkAsRead, articleID)
+	_, err := s.handle.Exec(stmtMarkAs, stateRead, articleID)
+	return err
+}
+
+func (s *Store) MarkAsUnfinished(articleID int) error {
+	_, err := s.handle.Exec(stmtMarkAs, stateUnfinished, articleID)
 	return err
 }
 
@@ -107,9 +126,15 @@ LIMIT 1
 SELECT label, path FROM sections
 WHERE id = ?
 `
-	stmtMarkAsRead = `
+	stmtMarkAs = `
 UPDATE OR IGNORE articles
-SET state = 1, mtime = CURRENT_TIMESTAMP
+SET state = ?, mtime = CURRENT_TIMESTAMP
 WHERE id = ?
+`
+	stmtLatestReadArticle = `
+SELECT id, section_id, path, size, state, mtime FROM articles
+WHERE state = 1
+ORDER BY mtime DESC
+LIMIT 1
 `
 )
