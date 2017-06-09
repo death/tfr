@@ -145,7 +145,8 @@ CREATE TABLE articles (
     section_id INTEGER NOT NULL,
     path TEXT NOT NULL,
     size INTEGER NOT NULL,
-    state INTEGER NOT NULL DEFAULT 0
+    state INTEGER NOT NULL DEFAULT 0,
+    mtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 `
 	stmtAddSection = `
