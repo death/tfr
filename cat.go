@@ -46,7 +46,9 @@ func (c CatCommand) Execute(args []string) error {
 			continue
 		}
 
-		_, err = io.Copy(os.Stdout, tarReader)
+		filter := &CP437Filter{Reader: tarReader}
+
+		_, err = io.Copy(os.Stdout, filter)
 		if err != nil {
 			return err
 		}
