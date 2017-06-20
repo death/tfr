@@ -1,0 +1,14 @@
+There are sets of virgin articles, unfinished articles, and finished
+(read) articles.
+
+In the beginning (after executing the 'index' command) all the
+articles are in the virgin set.
+
+The command 'random' picks an article from the virgin set to view.
+The article is moved to the unfinished set.
+
+The command 'next' picks the "oldest" article in the unfinished set to
+view.  The article becomes the newest article in the unfinished set.
+
+The command 'finish' moves the most recently viewed article from the
+unfinished set to the finished set.

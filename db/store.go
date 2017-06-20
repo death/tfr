@@ -43,10 +43,6 @@ func (s *Store) RandomArticle() (*Article, error) {
 	return s.extractArticle(stmtRandomArticle)
 }
 
-func (s *Store) LatestReadArticle() (*Article, error) {
-	return s.extractArticle(stmtLatestReadArticle)
-}
-
 func (s *Store) OldestUnfinishedArticle() (*Article, error) {
 	return s.extractArticle(stmtOldestUnfinishedArticle)
 }
@@ -119,6 +115,35 @@ func (s *Store) MarkAsUnfinished(articleID int) error {
 	return err
 }
 
+func (s *Store) SetLatestViewedArticleID(articleID int) error {
+	_, err := s.handle.Exec(stmtSetLatestViewedArticleID, articleID)
+	return err
+}
+
+const (
+	NoArticle = -1
+)
+
+func (s *Store) LatestViewedArticleID() (int, error) {
+	rows, err := s.handle.Query(stmtLatestViewedArticleID)
+	if err != nil {
+		return NoArticle, err
+	}
+	defer rows.Close()
+
+	var articleID int
+
+	if !rows.Next() {
+		return NoArticle, errors.New("no latest viewed article id column?")
+	}
+
+	if err := rows.Scan(&articleID); err != nil {
+		return NoArticle, err
+	}
+
+	return articleID, nil
+}
+
 const (
 	stmtRandomArticle = `
 SELECT id, section_id, path, size, state, mtime FROM articles
@@ -135,11 +160,14 @@ UPDATE OR IGNORE articles
 SET state = ?, mtime = CURRENT_TIMESTAMP
 WHERE id = ?
 `
-	stmtLatestReadArticle = `
-SELECT id, section_id, path, size, state, mtime FROM articles
-WHERE state = 1
-ORDER BY mtime DESC
-LIMIT 1
+	stmtLatestViewedArticleID = `
+SELECT value FROM globalstate
+WHERE key = 'latest_viewed_article_id'
+`
+	stmtSetLatestViewedArticleID = `
+UPDATE globalstate
+SET value = ?
+WHERE key = 'latest_viewed_article_id'
 `
 	stmtOldestUnfinishedArticle = `
 SELECT id, section_id, path, size, state, mtime FROM articles

@@ -148,6 +148,13 @@ CREATE TABLE articles (
     state INTEGER NOT NULL DEFAULT 0,
     mtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE globalstate (
+    key TEXT NOT NULL PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+INSERT INTO globalstate (key, value) VALUES ('latest_viewed_article_id', -1);
 `
 	stmtAddSection = `
 INSERT INTO sections (id, label, path) VALUES (?, ?, ?);

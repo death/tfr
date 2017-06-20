@@ -9,15 +9,15 @@ import (
 
 type CatCommand struct {
 	ArchiveFile  string `long:"archive-file" description:"The tar.gz archive file" required:"true"`
-	TextfilePath string `long:"textfile-path" description:"Path of the text file in the archive" required:"true"`
+	TextfilePath string `long:"textfile-path" description:"Path of the textfile in the archive" required:"true"`
 }
 
 var cat CatCommand
 
 func init() {
 	parser.AddCommand("cat",
-		"Print text file to standard output",
-		"Print text file to standard output.",
+		"Print textfile to standard output",
+		"Print textfile to standard output.",
 		&cat)
 }
 

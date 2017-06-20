@@ -1,32 +1,33 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"log"
 
 	"github.com/death/tfr/db"
 )
 
-type ResumeCommand struct {
-}
+const (
+	PickRandom = iota
+	PickUnfinished
+)
 
-var resume ResumeCommand
-
-func init() {
-	parser.AddCommand("resume",
-		"Resume reading oldest unfinished article",
-		"Resume reading oldest unfinished article.",
-		&resume)
-}
-
-func (c *ResumeCommand) Execute(args []string) error {
+func ViewArticle(which int) error {
 	store, err := db.NewStore(options.DBFile)
 	if err != nil {
 		return err
 	}
 	defer store.Close()
 
-	article, err := store.OldestUnfinishedArticle()
+	var article *db.Article
+	switch which {
+	case PickRandom:
+		article, err = store.RandomArticle()
+	case PickUnfinished:
+		article, err = store.OldestUnfinishedArticle()
+	default:
+		return errors.New("weird article picker")
+	}
 	if err != nil {
 		return err
 	}
@@ -45,9 +46,14 @@ func (c *ResumeCommand) Execute(args []string) error {
 		return err
 	}
 
-	err = store.MarkAsRead(article.ID)
+	err = store.MarkAsUnfinished(article.ID)
 	if err != nil {
-		log.Printf("Could not mark article %d as read: %v", article.ID, err)
+		return err
+	}
+
+	err = store.SetLatestViewedArticleID(article.ID)
+	if err != nil {
+		return err
 	}
 
 	return nil
