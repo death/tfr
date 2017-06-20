@@ -278,9 +278,14 @@ func (f *CP437Filter) Read(p []byte) (n int, err error) {
 
 	if f.count == 0 {
 		var onebyte [1]byte
-		n, err := f.Reader.Read(onebyte[:])
-		if err != nil || n == 0 {
-			return n, err
+		for {
+			n, err := f.Reader.Read(onebyte[:])
+			if err != nil || n == 0 {
+				return n, err
+			}
+			if onebyte[0] != 0x0D {
+				break
+			}
 		}
 		r := cp437[onebyte[0]]
 		f.count = utf8.EncodeRune(f.buf[:], r)
