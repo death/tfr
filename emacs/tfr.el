@@ -34,11 +34,14 @@
 
 (defvar tfr-program "tfr")
 
+(defvar tfr-current-section "any")
+
 (defvar tfr-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map [?R] 'tfr-random)
     (define-key map [?N] 'tfr-next)
     (define-key map [?F] 'tfr-finish)
+    (define-key map [?S] 'tfr-set-current-section)
     (define-key map [?q] 'bury-buffer)
     (define-key map [?h] 'left-char)
     (define-key map [?j] 'next-line)
@@ -66,32 +69,60 @@
 (defun tfr-command (command &optional output)
   "Run tfr with the supplied command.
 
+The supplied `command' may be a string or a list of strings.
+
 If `output' is `discard', then tfr's output will be discarded.
-Otherwise, the output will be inserted into the current buffer."
-  (let ((inhibit-read-only t))
-    (unless (eq output 'discard)
-      (erase-buffer))
-    (save-excursion
-      (message "TFR %s..." command)
-      (call-process tfr-program
-                    nil
-                    (if (eq output 'discard) nil t)
-                    nil
-                    command))
-    (message "TFR %s...done" command)
-    (set-buffer-modified-p nil)))
+If `output' is `string', then tfr's output will be returned as a string.
+Otherwise, the current buffer will be filled with tfr's output."
+  (if (eq output 'string)
+      (with-temp-buffer
+        (tfr-command command)
+        (buffer-string))
+    (let ((inhibit-read-only t))
+      (unless (eq output 'discard)
+        (erase-buffer))
+      (save-excursion
+        (message "TFR %s..." command)
+        (apply #'call-process
+               tfr-program
+               nil
+               (if (eq output 'discard) nil t)
+               nil
+               (tfr-ensure-list command)))
+      (message "TFR %s...done" command)
+      (set-buffer-modified-p nil))))
+
+(defun tfr-ensure-list (x)
+  (if (listp x)
+      x
+    (list x)))
 
 (defun tfr-next ()
   (interactive)
-  (tfr-command "next"))
+  (tfr-command (list "next" "--section" tfr-current-section)))
 
 (defun tfr-random ()
   (interactive)
-  (tfr-command "random"))
+  (tfr-command (list "random" "--section" tfr-current-section)))
 
 (defun tfr-finish ()
   (interactive)
   (tfr-command "finish" 'discard))
+
+(defun tfr-set-current-section (section)
+  (interactive (list (tfr-read-section "Section: ")))
+  (setq tfr-current-section section))
+
+(defun tfr-read-section (prompt)
+  (let ((section (completing-read prompt
+                                  (tfr-list-sections)
+                                  nil t nil 'tfr-section-history "")))
+    (if (equal section "")
+        "any"
+      section)))
+
+(defun tfr-list-sections ()
+  (split-string (tfr-command "sections" 'string) "\n" t))
 
 (provide 'tfr)
 
