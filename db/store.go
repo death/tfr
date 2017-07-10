@@ -99,6 +99,33 @@ func (s *Store) FindSection(sectionID int) (*Section, error) {
 	return nil, errors.New("no section found")
 }
 
+func (s *Store) ListSections() ([]*Section, error) {
+	rows, err := s.handle.Query(stmtListSections)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	sections := make([]*Section, 0)
+
+	for rows.Next() {
+		section := &Section{}
+		err = rows.Scan(&section.ID,
+			&section.Label,
+			&section.Path)
+		if err != nil {
+			return nil, err
+		}
+		sections = append(sections, section)
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return sections, nil
+}
+
 const (
 	stateUnread     = 0
 	stateRead       = 1
@@ -150,6 +177,9 @@ SELECT id, section_id, path, size, state, mtime FROM articles
 WHERE state = 0
 ORDER BY random()
 LIMIT 1
+`
+	stmtListSections = `
+SELECT id, label, path FROM sections
 `
 	stmtFindSection = `
 SELECT label, path FROM sections
