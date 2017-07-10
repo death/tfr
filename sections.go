@@ -30,6 +30,7 @@ func (c *SectionsCommand) Execute(args []string) error {
 		return err
 	}
 
+	fmt.Println(db.AnySectionLabel)
 	for _, section := range sections {
 		fmt.Println(section.Label)
 	}

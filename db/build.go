@@ -60,6 +60,11 @@ func addAllSections(dir string, tx *sql.Tx) error {
 	sectionID := 0
 	articleID := 0
 	mapSections(dir, func(sectionPath string, sectionLabel string) {
+		if sectionLabel == AnySectionLabel {
+			log.Printf("Skipping section with reserved name '%s'", sectionLabel)
+			return
+		}
+
 		_, err = addSection.Exec(sectionID, sectionLabel, sectionPath)
 		if err != nil {
 			log.Printf("Skipping section file '%s'", sectionPath)
