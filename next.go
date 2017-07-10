@@ -1,6 +1,7 @@
 package main
 
 type NextCommand struct {
+	Section string `short:"s" long:"section" default:"any"`
 }
 
 var next NextCommand
@@ -13,5 +14,5 @@ func init() {
 }
 
 func (c *NextCommand) Execute(args []string) error {
-	return ViewArticle(PickUnfinished)
+	return ViewArticle(PickUnfinished, c.Section)
 }

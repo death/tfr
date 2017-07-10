@@ -12,6 +12,9 @@ type Section struct {
 	Path  string
 }
 
+const AnySection = -1
+const AnySectionLabel = "any"
+
 type Article struct {
 	ID        int
 	SectionID int
@@ -39,16 +42,16 @@ func (s *Store) Close() {
 	s.handle.Close()
 }
 
-func (s *Store) RandomArticle() (*Article, error) {
-	return s.extractArticle(stmtRandomArticle)
+func (s *Store) RandomArticle(sectionID int) (*Article, error) {
+	return s.extractArticle(stmtRandomArticle, sectionID)
 }
 
-func (s *Store) OldestUnfinishedArticle() (*Article, error) {
-	return s.extractArticle(stmtOldestUnfinishedArticle)
+func (s *Store) OldestUnfinishedArticle(sectionID int) (*Article, error) {
+	return s.extractArticle(stmtOldestUnfinishedArticle, sectionID)
 }
 
-func (s *Store) extractArticle(query string) (*Article, error) {
-	rows, err := s.handle.Query(query)
+func (s *Store) extractArticle(query string, sectionID int) (*Article, error) {
+	rows, err := s.handle.Query(query, sectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +77,33 @@ func (s *Store) extractArticle(query string) (*Article, error) {
 	return nil, errors.New("no article found")
 }
 
-func (s *Store) FindSection(sectionID int) (*Section, error) {
-	rows, err := s.handle.Query(stmtFindSection, sectionID)
+func (s *Store) FindSectionByLabel(sectionLabel string) (*Section, error) {
+	rows, err := s.handle.Query(stmtFindSectionByLabel, sectionLabel)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		section := &Section{
+			Label: sectionLabel,
+		}
+		err = rows.Scan(&section.ID,
+			&section.Path)
+		if err != nil {
+			return nil, err
+		}
+		return section, nil
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+	return nil, errors.New("no section found")
+}
+
+func (s *Store) FindSectionByID(sectionID int) (*Section, error) {
+	rows, err := s.handle.Query(stmtFindSectionByID, sectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -174,14 +202,18 @@ func (s *Store) LatestViewedArticleID() (int, error) {
 const (
 	stmtRandomArticle = `
 SELECT id, section_id, path, size, state, mtime FROM articles
-WHERE state = 0
+WHERE state = 0 AND ? IN (-1, section_id)
 ORDER BY random()
 LIMIT 1
 `
 	stmtListSections = `
 SELECT id, label, path FROM sections
 `
-	stmtFindSection = `
+	stmtFindSectionByLabel = `
+SELECT id, path FROM sections
+WHERE label = ?
+`
+	stmtFindSectionByID = `
 SELECT label, path FROM sections
 WHERE id = ?
 `
@@ -201,7 +233,7 @@ WHERE key = 'latest_viewed_article_id'
 `
 	stmtOldestUnfinishedArticle = `
 SELECT id, section_id, path, size, state, mtime FROM articles
-WHERE state = 2
+WHERE state = 2 AND ? IN (-1, section_id)
 ORDER BY mtime ASC
 LIMIT 1
 `

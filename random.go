@@ -1,6 +1,7 @@
 package main
 
 type RandomCommand struct {
+	Section string `short:"s" long:"section" default:"any"`
 }
 
 var random RandomCommand
@@ -14,5 +15,5 @@ to the queue of unfinished textfiles.`,
 }
 
 func (c *RandomCommand) Execute(args []string) error {
-	return ViewArticle(PickRandom)
+	return ViewArticle(PickRandom, c.Section)
 }

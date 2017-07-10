@@ -12,19 +12,28 @@ const (
 	PickUnfinished
 )
 
-func ViewArticle(which int) error {
+func ViewArticle(which int, sectionLabel string) error {
 	store, err := db.NewStore(options.DBFile)
 	if err != nil {
 		return err
 	}
 	defer store.Close()
 
+	var sectionID = db.AnySection
+	if sectionLabel != db.AnySectionLabel {
+		section, err := store.FindSectionByLabel(sectionLabel)
+		if err != nil {
+			return err
+		}
+		sectionID = section.ID
+	}
+
 	var article *db.Article
 	switch which {
 	case PickRandom:
-		article, err = store.RandomArticle()
+		article, err = store.RandomArticle(sectionID)
 	case PickUnfinished:
-		article, err = store.OldestUnfinishedArticle()
+		article, err = store.OldestUnfinishedArticle(sectionID)
 	default:
 		return errors.New("weird article picker")
 	}
@@ -32,7 +41,7 @@ func ViewArticle(which int) error {
 		return err
 	}
 
-	section, err := store.FindSection(article.SectionID)
+	section, err := store.FindSectionByID(article.SectionID)
 	if err != nil {
 		return err
 	}
