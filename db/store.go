@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"time"
 )
 
@@ -199,6 +200,46 @@ func (s *Store) LatestViewedArticleID() (int, error) {
 	return articleID, nil
 }
 
+type Stats struct {
+	Unread     int
+	InProgress int
+	Read       int
+}
+
+func (s *Store) Statistics() (*Stats, error) {
+	rows, err := s.handle.Query(stmtStatistics)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	stats := &Stats{}
+
+	for rows.Next() {
+		var state int
+		var count int
+		if err := rows.Scan(&state, &count); err != nil {
+			return nil, err
+		}
+		switch state {
+		case stateUnread:
+			stats.Unread = count
+		case stateRead:
+			stats.Read = count
+		case stateUnfinished:
+			stats.InProgress = count
+		default:
+			log.Printf("Statistics: unexpected state %d\n", state)
+		}
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return stats, nil
+}
+
 const (
 	stmtRandomArticle = `
 SELECT id, section_id, path, size, state, mtime FROM articles
@@ -236,5 +277,9 @@ SELECT id, section_id, path, size, state, mtime FROM articles
 WHERE state = 2 AND ? IN (-1, section_id)
 ORDER BY mtime ASC
 LIMIT 1
+`
+	stmtStatistics = `
+SELECT state, COUNT(*) FROM articles
+GROUP BY state
 `
 )
