@@ -1,3 +1,12 @@
+WHAT IT IS
+
+This is a Textfile Reader.  Its purpose is to facilitate reading a
+mass of text files, especially text files from textfiles.com.
+
+Text files.
+
+DESIGN (totally not a hack!)
+
 There are sets of virgin articles, unfinished articles, and finished
 (read) articles.
 
@@ -12,3 +21,7 @@ view.  The article becomes the newest article in the unfinished set.
 
 The command 'finish' moves the most recently viewed article from the
 unfinished set to the finished set.
+
+LICENSE
+
+The one originating at the Massachusetts Institute of Technology.
