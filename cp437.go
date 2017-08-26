@@ -5,6 +5,7 @@ import (
 	"unicode/utf8"
 )
 
+// Table stolen from https://github.com/denisenkom/go-mssqldb
 var cp437 = [256]rune{
 	0x0000, //NULL
 	0x0001, //START OF HEADING
