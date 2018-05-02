@@ -206,21 +206,26 @@ type Stats struct {
 	Read       int
 }
 
-func (s *Store) Statistics() (*Stats, error) {
+func (s *Store) Statistics() (map[string]*Stats, error) {
 	rows, err := s.handle.Query(stmtStatistics)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	stats := &Stats{}
+	statsMap := make(map[string]*Stats)
 
 	for rows.Next() {
+		var section string
 		var state int
 		var count int
-		if err := rows.Scan(&state, &count); err != nil {
+		if err := rows.Scan(&section, &state, &count); err != nil {
 			return nil, err
 		}
+		if statsMap[section] == nil {
+			statsMap[section] = &Stats{}
+		}
+		stats := statsMap[section]
 		switch state {
 		case stateUnread:
 			stats.Unread = count
@@ -237,7 +242,7 @@ func (s *Store) Statistics() (*Stats, error) {
 		return nil, rows.Err()
 	}
 
-	return stats, nil
+	return statsMap, nil
 }
 
 const (
@@ -279,7 +284,9 @@ ORDER BY mtime ASC
 LIMIT 1
 `
 	stmtStatistics = `
-SELECT state, COUNT(*) FROM articles
-GROUP BY state
+SELECT label, state, COUNT(*) FROM articles
+JOIN sections
+WHERE sections.id = section_id
+GROUP BY section_id, state
 `
 )

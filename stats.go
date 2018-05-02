@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/death/tfr/db"
 )
@@ -25,14 +26,23 @@ func (c *StatsCommand) Execute(args []string) error {
 	}
 	defer store.Close()
 
-	stats, err := store.Statistics()
+	statsMap, err := store.Statistics()
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("%5d Unread\n", stats.Unread)
-	fmt.Printf("%5d In progress\n", stats.InProgress)
-	fmt.Printf("%5d Read\n", stats.Read)
+	var sections []string
+	for section := range statsMap {
+		sections = append(sections, section)
+	}
+	sort.Strings(sections)
+
+	fmt.Printf("%-20s %6s %6s %6s\n", "SECTION", "UNREAD", "INPROG", "READ")
+
+	for _, section := range sections {
+		stats := statsMap[section]
+		fmt.Printf("%-20s %6d %6d %6d\n", section, stats.Unread, stats.InProgress, stats.Read)
+	}
 
 	return nil
 }
